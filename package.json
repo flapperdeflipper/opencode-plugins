@@ -1,0 +1,9 @@
+{
+  "name": "opencode-plugins",
+  "private": true,
+  "description": "Custom OpenCode plugins shared across machines (GitHub-only, not published to npm)",
+  "type": "module",
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.18.18"
+  }
+}
