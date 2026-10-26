@@ -110,6 +110,8 @@ function partToText(part) {
   return ""
 }
 
+const TRANSCRIPT_TYPES = new Set(["user", "assistant", "synthetic", "system", "skill", "shell", "compaction"])
+
 function messageBody(message) {
   if (message.type === "user" || message.type === "synthetic" || message.type === "system" || message.type === "skill") {
     return message.text ?? ""
@@ -213,16 +215,17 @@ export default {
           } catch (error) {
             return { content: `Cannot read session ${input.session_id}: ${error.message}` }
           }
-          if (!messages?.length) return { content: `Session "${session.title}" has no messages.` }
+          const transcript = (messages ?? []).filter((message) => TRANSCRIPT_TYPES.has(message.type))
+          if (!transcript.length) return { content: `Session "${session.title}" has no messages.` }
           const limit = input.limit ?? 50
-          const shown = messages.length > limit ? messages.slice(-limit) : messages
-          const omitted = messages.length - shown.length
+          const shown = transcript.length > limit ? transcript.slice(-limit) : transcript
+          const omitted = transcript.length - shown.length
           const lines = shown.map((message) => {
             const when = fmtTime(message.time?.created)
             const body = cut(messageBody(message), TEXT_LIMIT)
             return `### ${message.type ?? "?"} ${when}\n${body || "(no text)"}`
           })
-          const header = `Session: ${session.title || "(untitled)"} (${messages.length} messages)`
+          const header = `Session: ${session.title || "(untitled)"} (${transcript.length} messages)`
           const note = omitted ? `\n[oldest ${omitted} messages omitted — raise limit to see them]` : ""
           return { content: header + note + "\n\n" + lines.join("\n\n") }
         },

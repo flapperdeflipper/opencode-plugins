@@ -121,6 +121,7 @@ test("sessions_get formats V2 messages and truncates from the end", async () => 
           ],
         },
         { type: "shell", time: { created: 3000 }, command: "ls" },
+        { type: "idle", time: { created: 4000 } },
       ],
     },
   }
@@ -135,11 +136,14 @@ test("sessions_get formats V2 messages and truncates from the end", async () => 
   assert.match(truncated.content, /\[shell: ls\]/)
   assert.doesNotMatch(truncated.content, /thinking/)
   assert.doesNotMatch(truncated.content, /hello/)
+  assert.doesNotMatch(truncated.content, /### idle/)
 
   const full = await tools.sessions_get.execute({ session_id: "ses_x" }, {})
   assert.match(full.content, /### user/)
   assert.match(full.content, /hello/)
   assert.doesNotMatch(full.content, /omitted/)
+  assert.doesNotMatch(full.content, /### idle/)
+  assert.match(full.content, /\(3 messages\)/)
 })
 
 test("sessions_get reports an unknown session", async () => {
