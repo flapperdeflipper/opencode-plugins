@@ -9,49 +9,52 @@ Each plugin lives in its own directory under `plugins/`.
 
 ## Install
 
-Not published to npm (deliberately). Install by cloning and linking or
-copying the plugin files:
+Not published to npm (deliberately). Install by cloning and linking the
+variant that matches your OpenCode version.
+
+### OpenCode 2
+
+The V2 plugin implements the V2 plugin API and has no npm dependencies.
 
 ```console
 git clone https://github.com/flapperdeflipper/opencode-plugins.git
 cd opencode-plugins
-npm install        # provides @opencode-ai/plugin to the plugins
+ln -s "$PWD/plugins/sessions/v2/sessions.js" ~/.config/opencode/plugins/sessions.js
 ```
 
-Then for each plugin you want, **symlink** it into OpenCode's global plugin
-directory (`~/.config/opencode/plugin/` — `plugins/` on some versions):
+`~/.config/opencode/plugins/` (plural) is V2's global auto-discovery directory;
+a direct `.js` file there loads without a config entry.
+
+### OpenCode 1
+
+The V1 plugin imports `@opencode-ai/plugin`, so install the dependency first.
 
 ```console
+git clone https://github.com/flapperdeflipper/opencode-plugins.git
+cd opencode-plugins && npm install
 ln -s "$PWD/plugins/sessions/sessions.js" ~/.config/opencode/plugin/sessions.js
 ```
 
-or **copy** it there instead if you prefer a snapshot over tracking the repo:
+Use `~/.config/opencode/plugin/` (singular) for V1. A V1 plugin does not run in
+OpenCode 2, and a V2 plugin does not run in OpenCode 1.
 
-```console
-cp plugins/sessions/sessions.js ~/.config/opencode/plugin/
-```
-
-Plugins load at OpenCode startup: new sessions pick them up immediately; a
-long-running `opencode serve` process adopts them on its next restart.
-
-### Requirements
-
-The plugins import `@opencode-ai/plugin`. That package must be resolvable
-from wherever the plugin file ends up — `npm install` in this clone covers
-symlinked installs; for copied installs add the dependency to the
-`package.json` in your OpenCode config directory instead:
-
-```console
-cd ~/.config/opencode && npm install @opencode-ai/plugin
-```
+Plugins load at OpenCode startup. V2 watches its config directories and reloads
+changes automatically; restart `opencode serve` if a change does not appear.
 
 ## Plugins
 
 ### sessions
 
-Gives every OpenCode agent read-only access to previous sessions, via the
-SDK client OpenCode hands to plugins (`session.list` / `session.messages`) —
-no MCP, no direct database access.
+Two implementations:
+
+- [V1](plugins/sessions/sessions.js) — uses the SDK client OpenCode 1 hands to
+  plugins (`session.list` / `session.messages`).
+- [V2](plugins/sessions/v2/sessions.js) — implements the OpenCode 2 plugin API.
+  It prefers `ctx.session.list` when the runtime exposes it (2.1+) and otherwise
+  reads the local OpenCode SQLite database read-only for the list; transcripts
+  always use the public `ctx.session` API.
+
+Both expose the same tools:
 
 - `sessions_list(query?, limit?)` — list sessions (id, title, model, last
   update, directory), optionally filtered by a case-insensitive substring
@@ -61,4 +64,5 @@ no MCP, no direct database access.
   Reasoning parts and diffs are skipped. When truncated, the most recent
   messages are kept and the omission is noted.
 
-Developed against `@opencode-ai/plugin` 1.17–1.18.
+The V1 implementation targets `@opencode-ai/plugin` 1.17–1.18. The V2
+implementation targets the OpenCode 2 plugin API (verified against 2.0.29).
