@@ -5,5 +5,11 @@
   "type": "module",
   "dependencies": {
     "@opencode-ai/plugin": "^1.18.18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
